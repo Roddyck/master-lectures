@@ -1,0 +1,39 @@
+name: Release Lectures
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+
+      - name: Setup Typst
+        uses: typst-community/setup-typst@v5
+        with:
+          typst-version: 0.15.1
+
+      - name: Build lectures
+        run: ./build.sh
+
+      - name: Package compiled lectures into zip
+        run: |
+          cd build
+          zip -r "../lectures-${{ github.ref_name }}.zip" *
+          cd ..
+          ls -lh *.zip
+
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: lectures-${{ github.ref_name }}.zip
+          name: Lectures ${{ github.ref_name }}
+          generate_release_notes: true
